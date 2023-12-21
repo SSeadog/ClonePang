@@ -49,21 +49,22 @@ public class PangManager_Copy : MonoBehaviour
     private bool[][] isCheck;
 
     private Queue<Pos> queue = new Queue<Pos>();
-    private List<Pos>[] matchList;
+    private Dictionary<Pos, List<Pos>> matchData = new Dictionary<Pos, List<Pos>>();
 
     void Start()
     {
         InitBoard();
         GenerateBlocks();
-        for (int i = 0; i < blockVerticalSize; i++)
-        {
-            for (int j = 0; j < blockHorizontalSize; j++)
-            {
-                Pos pos = new Pos(i, j);
-                //ThreeMatch(pos, board[i][j]);
-                //ThreeMatch(pos, board[i][j]);
-            }
-        }
+        CheckThreeMatch(new Pos(0, 0));
+        //for (int i = 0; i < blockVerticalSize; i++)
+        //{
+        //    for (int j = 0; j < blockHorizontalSize; j++)
+        //    {
+        //        Pos pos = new Pos(i, j);
+        //        //ThreeMatch(pos, board[i][j]);
+        //        //ThreeMatch(pos, board[i][j]);
+        //    }
+        //}
     }
 
     private void InitBoard()
@@ -87,10 +88,10 @@ public class PangManager_Copy : MonoBehaviour
         {
             for (int j = 0; j < blockHorizontalSize; j++)
             {
-                board[i][j] = BlockKind.YellowBlock;
                 Vector3 spawnPos = spawnPosBase + (Vector3.right * j * (blockSize[1] + interval[1])) + (Vector3.down * i * (blockSize[0] + interval[0]));
                 int rand = Random.Range(1, 6);
                 InstantiateBlock((BlockKind)rand, spawnPos, new Pos(i, j));
+                board[i][j] = (BlockKind)rand;
             }
         }
     }
@@ -123,18 +124,46 @@ public class PangManager_Copy : MonoBehaviour
     }
 
     // bfs로 구현
-    private void CheckThreeMatch(Pos pos, BlockKind kind, Pos basePos)
+    private void CheckThreeMatch(Pos pos)
     {
-        while(queue.Count > 0)
+        queue.Enqueue(pos);
+        BlockKind blockKind = board[pos.y][pos.x];
+        matchData.Add(pos, new List<Pos>());
+        while (queue.Count > 0)
         {
+            Pos currentPos = queue.Dequeue();
+
+            // 보드 범위 벗어나면 return
+            if (currentPos.y < 0 || currentPos.y >= blockVerticalSize)
+                continue;
+            if (currentPos.x < 0 || currentPos.x >= blockHorizontalSize)
+                continue;
+
             // 1. 방문 여부 확인
-            if (isCheck[pos.y][pos.x] == true)
-                return;
+            if (isCheck[currentPos.y][currentPos.x] == true)
+                continue;
+
+            // 블럭 색이 다르면 다음으로
+            if (board[currentPos.y][currentPos.x] != blockKind)
+                continue;
+
+            matchData[pos].Add(currentPos);
+            isCheck[currentPos.y][currentPos.x] = true;
 
             // 2. 상하좌우 확인
-
+            queue.Enqueue(new Pos(currentPos.y - 1, currentPos.x));
+            queue.Enqueue(new Pos(currentPos.y, currentPos.x - 1));
+            queue.Enqueue(new Pos(currentPos.y + 1, currentPos.x));
+            queue.Enqueue(new Pos(currentPos.y, currentPos.x + 1));
         }
 
+        foreach (Pos p in matchData[pos])
+        {
+            Debug.Log(p.y + "," + p.x);
+        }
 
+        //// matchData의 리스트가 1개 이하면 Dict에서 삭제
+        //if (matchData[pos].Count <= 1)
+        //    matchData.Remove(pos);
     }
 }
