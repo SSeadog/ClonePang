@@ -153,6 +153,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockParent: {fileID: 1461709164}
+  blueBlock: {fileID: 8522868953553335676, guid: 00ffb90fc42266f44b5e9d43b80a5ec2,
+    type: 3}
+  greenBlock: {fileID: 8522868953553335676, guid: b5bc46241e26cc542a1c0b89d8dbb7a6,
+    type: 3}
+  purpleBlock: {fileID: 8522868953553335676, guid: cad950cb7ea75474999634747d70174e,
+    type: 3}
+  redBlock: {fileID: 8522868953553335676, guid: b6d976ff8767e8e4199fa191489ac087,
+    type: 3}
   yellowBlock: {fileID: 8522868953553335676, guid: a6d239a04d0577a4fa55d4f1302e4e67,
     type: 3}
 --- !u!4 &58279982
