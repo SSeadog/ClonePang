@@ -49,22 +49,23 @@ public class PangManager_Copy : MonoBehaviour
     private bool[][] isCheck;
 
     private Queue<Pos> queue = new Queue<Pos>();
-    private Dictionary<Pos, List<Pos>> matchData = new Dictionary<Pos, List<Pos>>();
+    private Dictionary<Pos, List<Pos>> matchData = new Dictionary<Pos, List<Pos>>(); // 각 매치마다 한번씩 쓰니까 함수 안으로 넣는 게 좋을 듯
+
+    private Dictionary<EMatchType, List<Vector2>> matchTypeData = new Dictionary<EMatchType, List<Vector2>>();
 
     void Start()
     {
+        InitMatchTypeData();
+
         InitBoard();
         GenerateBlocks();
-        CheckThreeMatch(new Pos(0, 0));
-        //for (int i = 0; i < blockVerticalSize; i++)
-        //{
-        //    for (int j = 0; j < blockHorizontalSize; j++)
-        //    {
-        //        Pos pos = new Pos(i, j);
-        //        //ThreeMatch(pos, board[i][j]);
-        //        //ThreeMatch(pos, board[i][j]);
-        //    }
-        //}
+
+        Invoke("Test", 3f);
+    }
+
+    private void InitMatchTypeData()
+    {
+        matchTypeData.Add(EMatchType.vertical, new List<Vector2> { new Vector2(0, 0), new Vector2(-1, 0), new Vector2(-2, 0)});
     }
 
     private void InitBoard()
@@ -123,6 +124,17 @@ public class PangManager_Copy : MonoBehaviour
         instanceBoard[posIndex.y][posIndex.x] = instance;
     }
 
+    private void Test()
+    {
+        for (int i = 0; i < blockVerticalSize; i++)
+        {
+            for (int j = 0; j < blockHorizontalSize; j++)
+            {
+                CheckThreeMatch(new Pos(i, j));
+            }
+        }
+    }
+
     // bfs로 구현
     private void CheckThreeMatch(Pos pos)
     {
@@ -157,13 +169,42 @@ public class PangManager_Copy : MonoBehaviour
             queue.Enqueue(new Pos(currentPos.y, currentPos.x + 1));
         }
 
+        CheckBreak(pos);
+        matchData.Remove(pos);
+    }
+
+    // 만약 세로 매치가 되었다
+    // 그럼 basePos기준 delta값은 {(-1,0), (0,0), (1,0)} 또는 {(0,0), (-1,0), (-2,0)} 또는 {(0,0), (1,0), (2,0)}
+    // 근데 왼쪽 위부터 탐색을 시작하니까 y축 값이 감소하는 케이스 밖에 안나올 거 같음 -> {(0,0), (-1,0), (-2,0)}
+
+
+    // 매치 타입이 세로 3개인지 가로 3개인지 파악한 뒤 삭제
+    private void CheckBreak(Pos pos)
+    {
+        if (matchData[pos].Count != 3)
+            return;
+
+        List<Vector2> deltas = new List<Vector2>();
+
+        foreach (Pos p in matchData[pos])
+        {
+            deltas.Add(new Vector2(pos.y - p.y, pos.x - p.x));
+        }
+
+        for (int i = 0; i < deltas.Count; i++)
+        {
+            if (matchTypeData[EMatchType.vertical][i] != deltas[i])
+            {
+                Debug.Log("vertical 매치 검증 실패!");
+                return;
+            }
+        }
+
         foreach (Pos p in matchData[pos])
         {
             Debug.Log(p.y + "," + p.x);
+            DestroyImmediate(instanceBoard[p.y][p.x]);
+            board[p.y][p.x] = BlockKind.None;
         }
-
-        //// matchData의 리스트가 1개 이하면 Dict에서 삭제
-        //if (matchData[pos].Count <= 1)
-        //    matchData.Remove(pos);
     }
 }
