@@ -45,7 +45,6 @@ public class PangManager_Copy : MonoBehaviour
     private bool[][] isCheck;
 
     private Queue<Pos> queue = new Queue<Pos>();
-    private Dictionary<Pos, List<Pos>> matchData = new Dictionary<Pos, List<Pos>>(); // 각 매치마다 한번씩 쓰니까 함수 안으로 넣는 게 좋을 듯
 
     void Start()
     {
@@ -146,14 +145,15 @@ public class PangManager_Copy : MonoBehaviour
     private void CheckThreeMatch(Pos pos)
     {
         CheckVertical(pos);
-        //CheckHorizontal(pos);
+        CheckHorizontal(pos);
     }
 
     private void CheckVertical(Pos pos)
     {
+        List<Pos> matchData = new List<Pos>();
+
         queue.Enqueue(pos);
         BlockKind blockKind = board[pos.y][pos.x];
-        matchData.Add(pos, new List<Pos>());
         while (queue.Count > 0)
         {
             Pos currentPos = queue.Dequeue();
@@ -165,7 +165,7 @@ public class PangManager_Copy : MonoBehaviour
                 continue;
 
             // 이미 5개 매치했다면 탐색 종료
-            if (matchData[pos].Count == 5)
+            if (matchData.Count == 5)
                 break;
 
             // 1. 방문 여부 확인
@@ -176,7 +176,7 @@ public class PangManager_Copy : MonoBehaviour
             if (board[currentPos.y][currentPos.x] != blockKind)
                 continue;
 
-            matchData[pos].Add(currentPos);
+            matchData.Add(currentPos);
             isCheck[currentPos.y][currentPos.x] = true;
 
             // 2. 상하 확인
@@ -186,15 +186,15 @@ public class PangManager_Copy : MonoBehaviour
 
         // 3개 이상 매치했으면 가로로 2개 더 매치할 수 있는지 확인 필요
         // 요것도 아마 큐로 넣어뒀다가 하나씩 빼면서 확인하면 되지 않을까 싶음
-        // 근데 4개, 5개 일때는 찾을 필요 없음
-        if (matchData[pos].Count == 3)
+        // 근데 4개, 5개일때는 찾을 필요 없음
+        if (matchData.Count == 3)
         {
-            for (int i = 0; i < matchData[pos].Count; i++)
+            for (int i = 0; i < matchData.Count; i++)
             {
                 List<Pos> newMatchData = new List<Pos>();
                 Queue<Pos> additionalQueue = new Queue<Pos>();
-                additionalQueue.Enqueue(matchData[pos][i]);
-                isCheck[matchData[pos][i].y][matchData[pos][i].x] = false;
+                additionalQueue.Enqueue(matchData[i]);
+                isCheck[matchData[i].y][matchData[i].x] = false;
                 while (additionalQueue.Count > 0)
                 {
                     Pos currentPos = additionalQueue.Dequeue();
@@ -240,8 +240,8 @@ public class PangManager_Copy : MonoBehaviour
                 {
                     foreach (Pos newP in newMatchData)
                     {
-                        if (matchData[pos].Contains(newP) == false)
-                            matchData[pos].Add(newP);
+                        if (matchData.Contains(newP) == false)
+                            matchData.Add(newP);
                     }
 
                     break;
@@ -249,16 +249,18 @@ public class PangManager_Copy : MonoBehaviour
             }
         }
 
-        CheckBreak(pos);
+        CheckBreak(matchData);
         matchData.Remove(pos);
         queue.Clear();
     }
 
     private void CheckHorizontal(Pos pos)
     {
+        List<Pos> matchData = new List<Pos>();
+
         queue.Enqueue(pos);
+        isCheck[pos.y][pos.x] = false;
         BlockKind blockKind = board[pos.y][pos.x];
-        matchData.Add(pos, new List<Pos>());
         while (queue.Count > 0)
         {
             Pos currentPos = queue.Dequeue();
@@ -270,7 +272,7 @@ public class PangManager_Copy : MonoBehaviour
                 continue;
 
             // 이미 5개 매치했다면 탐색 종료
-            if (matchData[pos].Count == 5)
+            if (matchData.Count == 5)
                 break;
 
             // 1. 방문 여부 확인
@@ -281,33 +283,99 @@ public class PangManager_Copy : MonoBehaviour
             if (board[currentPos.y][currentPos.x] != blockKind)
                 continue;
 
-            matchData[pos].Add(currentPos);
+            matchData.Add(currentPos);
             isCheck[currentPos.y][currentPos.x] = true;
 
-            // 2. 상하 확인
+            // 2. 좌우 확인
             queue.Enqueue(new Pos(currentPos.y, currentPos.x - 1));
             queue.Enqueue(new Pos(currentPos.y, currentPos.x + 1));
         }
 
-        CheckBreak(pos);
+        // 3개 이상 매치했으면 가로로 2개 더 매치할 수 있는지 확인 필요
+        // 요것도 아마 큐로 넣어뒀다가 하나씩 빼면서 확인하면 되지 않을까 싶음
+        // 근데 4개, 5개일때는 찾을 필요 없음
+        if (matchData.Count == 3)
+        {
+            for (int i = 0; i < matchData.Count; i++)
+            {
+                List<Pos> newMatchData = new List<Pos>();
+                Queue<Pos> additionalQueue = new Queue<Pos>();
+                additionalQueue.Enqueue(matchData[i]);
+                isCheck[matchData[i].y][matchData[i].x] = false;
+                while (additionalQueue.Count > 0)
+                {
+                    Pos currentPos = additionalQueue.Dequeue();
+
+                    // 보드 범위 벗어나면 return
+                    if (currentPos.y < 0 || currentPos.y >= blockVerticalSize)
+                        continue;
+                    if (currentPos.x < 0 || currentPos.x >= blockHorizontalSize)
+                        continue;
+
+                    // 3개 매치했다면 탐색 종료
+                    if (newMatchData.Count == 3)
+                        break;
+
+                    // 1. 방문 여부 확인
+                    if (isCheck[currentPos.y][currentPos.x] == true)
+                        continue;
+
+                    // 블럭 색이 다르면 다음으로
+                    if (board[currentPos.y][currentPos.x] != blockKind)
+                        continue;
+
+                    newMatchData.Add(currentPos);
+                    isCheck[currentPos.y][currentPos.x] = true;
+
+                    // 2. 상하 확인
+                    additionalQueue.Enqueue(new Pos(currentPos.y - 1, currentPos.x));
+                    additionalQueue.Enqueue(new Pos(currentPos.y + 1, currentPos.x));
+                }
+
+                // 4개면은 추가 매치 성공으로 인정하지 않고 해당 부분은 미탐색 처리해주기
+                if (newMatchData.Count < 3)
+                {
+                    // check 여부 초기화
+                    foreach (Pos p in newMatchData)
+                        isCheck[p.y][p.x] = false;
+
+                    newMatchData.Clear();
+                }
+
+                // 3개가 추가 매칭됐으면 더 보지말고 matchData에 추가 후 삭제하러 가기
+                if (newMatchData.Count == 3)
+                {
+                    foreach (Pos newP in newMatchData)
+                    {
+                        if (matchData.Contains(newP) == false)
+                            matchData.Add(newP);
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        CheckBreak(matchData);
         matchData.Remove(pos);
+        queue.Clear();
     }
 
-    // 매치된 타일이 3개 이상이면 삭제
-    private void CheckBreak(Pos pos)
+    //매치된 타일이 3개 이상이면 삭제
+    private void CheckBreak(List<Pos> matchData)
     {
-        if (matchData[pos].Count < 3)
+        if (matchData.Count < 3)
         {
             // check 여부 초기화
-            foreach (Pos p in matchData[pos])
+            foreach (Pos p in matchData)
                 isCheck[p.y][p.x] = false;
 
             return;
         }
 
-        Debug.Log(matchData[pos].Count + " 개 부수기!");
+        Debug.Log(matchData.Count + " 개 부수기!");
 
-        foreach (Pos p in matchData[pos])
+        foreach (Pos p in matchData)
         {
             Debug.Log(p.y + "," + p.x);
             DestroyImmediate(instanceBoard[p.y][p.x]);
