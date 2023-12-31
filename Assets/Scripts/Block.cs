@@ -1,15 +1,21 @@
 using UnityEngine;
+using UnityEngine.UI;
+using Util;
 
 public class Block : MonoBehaviour
 {
-    void Start()
-    {
-        
-    }
+    private Button button;
 
-    // Update is called once per frame
-    void Update()
+    private Pos pos;
+
+    public void Init(Pos pos)
     {
-        transform.position += Vector3.down * Time.deltaTime * 10f;
+        this.pos = pos;
+        button = GetComponent<Button>();
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            PangManager.Instance.SelectObject(pos);
+        });
     }
 }
