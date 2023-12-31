@@ -14,6 +14,11 @@ public class PangManager : MonoBehaviour
     private static PangManager instance;
     public static PangManager Instance { get { return instance; } }
 
+    [SerializeField] private SelectBorder firstSelectBorder;
+    [SerializeField] private SelectBorder secondSelectBorder;
+
+    [SerializeField] private GameObject touchBlock;
+
     private BoardController board;
 
     private bool[][] isCheck;
@@ -24,7 +29,24 @@ public class PangManager : MonoBehaviour
 
     private State state;
 
-    public State State { get { return state; } set { if (state != value) state = value; } }
+    public State State {
+        get
+        {
+            return state;
+        }
+        set
+        {
+            if (state == value)
+                return;
+
+            state = value;
+
+            if (state == State.Playing)
+                touchBlock.SetActive(false);
+            else if (state == State.Checking)
+                touchBlock.SetActive(true);
+        }
+    }
 
     private void Start()
     {
@@ -53,6 +75,8 @@ public class PangManager : MonoBehaviour
         if (firstSelect == null)
         {
             firstSelect = pos;
+            firstSelectBorder.transform.localPosition = board.GetSpawnCoord(pos);
+            firstSelectBorder.Init();
         }
         else if (secondSelect == null)
         {
@@ -60,23 +84,30 @@ public class PangManager : MonoBehaviour
             {
                 firstSelect = null;
                 secondSelect = null;
+                firstSelectBorder.Clear();
+                secondSelectBorder.Clear();
                 return;
             }
 
             State = State.Checking;
             secondSelect = pos;
+            secondSelectBorder.transform.localPosition = board.GetSpawnCoord(pos);
+            secondSelectBorder.Init();
             board.SwapBlock(firstSelect, secondSelect);
             CheckPang(firstSelect);
             CheckPang(secondSelect);
 
-            StartCoroutine(CoRefill());
+            StartCoroutine(CoRefill(0.2f));
+
+            firstSelectBorder.Clear();
+            secondSelectBorder.Clear();
         }
     }
 
-    public IEnumerator CoRefill()
+    public IEnumerator CoRefill(float waitTime = 1f)
     {
         Debug.Log("CoRefill »£√‚");
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(waitTime);
         board.Refill();
 
         yield return new WaitForSeconds(1f);
@@ -84,7 +115,7 @@ public class PangManager : MonoBehaviour
 
         if (IsEmptyExist() == true)
         {
-            StartCoroutine(CoRefill());
+            StartCoroutine(CoRefill(0.2f));
         }
         else
         {

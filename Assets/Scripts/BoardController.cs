@@ -75,6 +75,7 @@ public class BoardController : MonoBehaviour
             for (int j = 0; j < blockHorizontalSize; j++)
             {
                 Pos basePos = new Pos(i, j);
+                
                 // 자기가 빈칸이면 다음 칸 검사
                 if (GetBlock(basePos) == BlockKind.None)
                     continue;
@@ -100,10 +101,8 @@ public class BoardController : MonoBehaviour
                 if (board[i][j] == BlockKind.None)
                 {
                     Pos spawnPos = new Pos(i, j);
-                    Vector3 spawnCoord = GetSpawnCoord(spawnPos);
                     int rand = Random.Range(1, 6);
-                    InstantiateBlock((BlockKind)rand, spawnCoord, spawnPos);
-                    board[i][j] = (BlockKind)rand;
+                    SpawnBlock(spawnPos, (BlockKind)rand);
                 }
             }
         }
@@ -127,33 +126,31 @@ public class BoardController : MonoBehaviour
             for (int j = 0; j < blockHorizontalSize; j++)
             {
                 Pos spawnPos = new Pos(i, j);
-                Vector3 spawnCoord = GetSpawnCoord(spawnPos);
                 int rand = Random.Range(1, 6);
-                InstantiateBlock((BlockKind)rand, spawnCoord, spawnPos);
-                board[i][j] = (BlockKind)rand;
+                SpawnBlock(spawnPos, (BlockKind)rand);
             }
         }
 
-        //InstantiateBlock(BlockKind.DebugBlock, spawnPosBase + (Vector3.right * 0 * (blockSize[1] + interval[1])) + (Vector3.down * 0 * (blockSize[0] + interval[0])), new Pos(0, 0));
-        //InstantiateBlock(BlockKind.DebugBlock, spawnPosBase + (Vector3.right * 0 * (blockSize[1] + interval[1])) + (Vector3.down * 1 * (blockSize[0] + interval[0])), new Pos(1, 0));
-        //InstantiateBlock(BlockKind.DebugBlock, spawnPosBase + (Vector3.right * 0 * (blockSize[1] + interval[1])) + (Vector3.down * 2 * (blockSize[0] + interval[0])), new Pos(2, 0));
-        //InstantiateBlock(BlockKind.DebugBlock, spawnPosBase + (Vector3.right * 1 * (blockSize[1] + interval[1])) + (Vector3.down * 2 * (blockSize[0] + interval[0])), new Pos(2, 1));
-        //InstantiateBlock(BlockKind.DebugBlock, spawnPosBase + (Vector3.right * 2 * (blockSize[1] + interval[1])) + (Vector3.down * 2 * (blockSize[0] + interval[0])), new Pos(2, 2));
-
-        //board[0][0] = BlockKind.DebugBlock;
-        //board[1][0] = BlockKind.DebugBlock;
-        //board[2][0] = BlockKind.DebugBlock;
-        //board[2][1] = BlockKind.DebugBlock;
-        //board[2][2] = BlockKind.DebugBlock;
+        SpawnBlock(new Pos(0, 0), BlockKind.DebugBlock);
+        SpawnBlock(new Pos(1, 0), BlockKind.DebugBlock);
+        SpawnBlock(new Pos(2, 0), BlockKind.DebugBlock);
+        SpawnBlock(new Pos(1, 1), BlockKind.DebugBlock);
+        SpawnBlock(new Pos(1, 2), BlockKind.DebugBlock);
     }
 
-    private void InstantiateBlock(BlockKind block, Vector3 spawnPos, Pos posIndex)
+    private void SpawnBlock(Pos pos, BlockKind kind)
     {
-        if (instanceBoard[posIndex.y][posIndex.x] != null)
-        {
-            DestroyImmediate(instanceBoard[posIndex.y][posIndex.x]);
-        }
+        if (GetBlock(pos) != BlockKind.None)
+            BreakBlock(pos);
 
+        Vector3 spawnCoord = GetSpawnCoord(pos);
+        GameObject blockInstance = InstantiateBlock(kind, spawnCoord, pos);
+        board[pos.y][pos.x] = kind;
+        instanceBoard[pos.y][pos.x] = blockInstance;
+    }
+
+    private GameObject InstantiateBlock(BlockKind block, Vector3 spawnPos, Pos posIndex)
+    {
         GameObject blockOrigin = null;
         switch (block)
         {
@@ -180,13 +177,23 @@ public class BoardController : MonoBehaviour
         GameObject instance = Instantiate(blockOrigin, blockParent);
         instance.transform.localPosition = spawnPos;
         instance.GetComponent<Block>().Init(posIndex);
-        instanceBoard[posIndex.y][posIndex.x] = instance;
+
+        return instance;
     }
 
     private void MoveBlock(Pos from, Pos to)
     {
+        if (GetBlock(from) == BlockKind.None)
+        {
+            Debug.Log("앞에서 체크했는데 왜 None이지?");
+            return;
+        }
         board[to.y][to.x] = board[from.y][from.x];
         instanceBoard[to.y][to.x] = instanceBoard[from.y][from.x];
+        if (instanceBoard[to.y][to.x] == null)
+        {
+            Debug.Log("바꾼 녀석이 null이다!");
+        }
         instanceBoard[to.y][to.x].transform.localPosition = GetSpawnCoord(to);
         instanceBoard[to.y][to.x].GetComponent<Block>().Init(to);
 
@@ -194,7 +201,8 @@ public class BoardController : MonoBehaviour
         instanceBoard[from.y][from.x] = null;
     }
 
-    private Vector3 GetSpawnCoord(Pos p)
+    // Util로 옮기는 게 좋을 듯
+    public Vector3 GetSpawnCoord(Pos p)
     {
         return spawnPosBase + (Vector3.right * p.x * (blockSize[1] + interval[1])) + (Vector3.down * p.y * (blockSize[0] + interval[0]));
     }
@@ -212,7 +220,6 @@ public class BoardController : MonoBehaviour
         }
 
         yield return new WaitForSeconds(1f);
-        StartCoroutine(PangManager.Instance.CoRefill());
-        PangManager.Instance.State = State.Playing;
+        StartCoroutine(PangManager.Instance.CoRefill(0.2f));
     }
 }
