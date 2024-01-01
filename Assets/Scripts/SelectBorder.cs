@@ -8,17 +8,19 @@ public class SelectBorder : MonoBehaviour
     private float minScale = 0.93f;
     private float maxScale = 1.07f;
     private float animateSpeed = 10f;
+    private Coroutine coroutine;
+
 
     public void Init()
     {
         borderImage.enabled = true;
-        StartCoroutine(CoAnimate());
+        coroutine = StartCoroutine(CoAnimate());
     }
 
     public void Clear()
     {
         borderImage.enabled = false;
-        StopCoroutine(CoAnimate());
+        StopCoroutine(coroutine);
         transform.localScale = Vector3.one;
     }
 

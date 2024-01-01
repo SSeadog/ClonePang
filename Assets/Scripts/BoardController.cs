@@ -220,6 +220,6 @@ public class BoardController : MonoBehaviour
         }
 
         yield return new WaitForSeconds(1f);
-        StartCoroutine(PangManager.Instance.CoRefill(0.2f));
+        StartCoroutine(PangManager.Instance.CoRefill(0.4f));
     }
 }

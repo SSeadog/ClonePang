@@ -80,6 +80,10 @@ public class PangManager : MonoBehaviour
         }
         else if (secondSelect == null)
         {
+            secondSelect = pos;
+            secondSelectBorder.transform.localPosition = board.GetSpawnCoord(pos);
+            secondSelectBorder.Init();
+
             if (firstSelect == secondSelect)
             {
                 firstSelect = null;
@@ -89,19 +93,61 @@ public class PangManager : MonoBehaviour
                 return;
             }
 
-            State = State.Checking;
-            secondSelect = pos;
-            secondSelectBorder.transform.localPosition = board.GetSpawnCoord(pos);
-            secondSelectBorder.Init();
-            board.SwapBlock(firstSelect, secondSelect);
-            CheckPang(firstSelect);
-            CheckPang(secondSelect);
+            // 첫번째 선택 블록 기준으로 상하좌우가 아니면 선택 취소
+            if (CheckNear() == false)
+            {
+                firstSelect = null;
+                secondSelect = null;
+                firstSelectBorder.Clear();
+                secondSelectBorder.Clear();
+                return;
+            }
 
-            StartCoroutine(CoRefill(0.2f));
-
-            firstSelectBorder.Clear();
-            secondSelectBorder.Clear();
+            StartCoroutine(CoSelectDone());
         }
+    }
+
+    private bool CheckNear()
+    {
+        if (firstSelect.y + 1 == secondSelect.y && firstSelect.x == secondSelect.x)
+            return true;
+        if (firstSelect.y - 1 == secondSelect.y && firstSelect.x == secondSelect.x)
+            return true;
+        if (firstSelect.y == secondSelect.y && firstSelect.x + 1 == secondSelect.x)
+            return true;
+        if (firstSelect.y == secondSelect.y && firstSelect.x - 1 == secondSelect.x)
+            return true;
+
+        return false;
+    }
+
+    private IEnumerator CoSelectDone()
+    {
+        board.SwapBlock(firstSelect, secondSelect);
+        
+        yield return new WaitForSeconds(0.4f);
+
+        State = State.Checking;
+
+        firstSelectBorder.Clear();
+        secondSelectBorder.Clear();
+
+        CheckPang(firstSelect);
+        CheckPang(secondSelect);
+
+        // 바꿨다가 매치 안되면 다시 돌려줘야함
+        if (IsEmptyExist() == false)
+        {
+            board.SwapBlock(firstSelect, secondSelect);
+            firstSelect = null;
+            secondSelect = null;
+            State = State.Playing;
+        }
+        else
+        {
+            StartCoroutine(CoRefill(0.4f));
+        }
+
     }
 
     public IEnumerator CoRefill(float waitTime = 1f)
@@ -111,11 +157,11 @@ public class PangManager : MonoBehaviour
         board.Refill();
 
         yield return new WaitForSeconds(1f);
-        CheckEntireBoard();
+        CheckPangEntireBoard();
 
         if (IsEmptyExist() == true)
         {
-            StartCoroutine(CoRefill(0.2f));
+            StartCoroutine(CoRefill(0.4f));
         }
         else
         {
@@ -126,7 +172,7 @@ public class PangManager : MonoBehaviour
 
     }
 
-    private void CheckEntireBoard()
+    private void CheckPangEntireBoard()
     {
         for (int i = 0; i < board.BlockVerticalSize; i++)
         {
