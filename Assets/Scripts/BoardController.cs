@@ -36,7 +36,7 @@ public class BoardController : MonoBehaviour
 
         // 초기 세팅되면 매치되는 게 있는 게 확인해야함
         // 아니면 세팅할 때 아예 없게 세팅을 해야함
-        StartCoroutine(Test());
+        StartCoroutine(PangManager.Instance.Test());
     }
 
     public BlockKind GetBlock(Pos pos)
@@ -126,16 +126,21 @@ public class BoardController : MonoBehaviour
             for (int j = 0; j < blockHorizontalSize; j++)
             {
                 Pos spawnPos = new Pos(i, j);
-                int rand = Random.Range(1, 6);
-                SpawnBlock(spawnPos, (BlockKind)rand);
+                BlockKind blockKind = (BlockKind)Random.Range(1, 6);
+                SpawnBlock(spawnPos, blockKind);
+                while(PangManager.Instance.IsPang(spawnPos) == true)
+                {
+                    blockKind = (BlockKind)Random.Range(1, 6);
+                    SpawnBlock(spawnPos, blockKind);
+                }
             }
         }
 
-        SpawnBlock(new Pos(0, 0), BlockKind.DebugBlock);
-        SpawnBlock(new Pos(1, 0), BlockKind.DebugBlock);
-        SpawnBlock(new Pos(2, 0), BlockKind.DebugBlock);
-        SpawnBlock(new Pos(1, 1), BlockKind.DebugBlock);
-        SpawnBlock(new Pos(1, 2), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(0, 0), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(1, 0), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(2, 0), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(1, 1), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(1, 2), BlockKind.DebugBlock);
     }
 
     private void SpawnBlock(Pos pos, BlockKind kind)
@@ -205,21 +210,5 @@ public class BoardController : MonoBehaviour
     public Vector3 GetSpawnCoord(Pos p)
     {
         return spawnPosBase + (Vector3.right * p.x * (blockSize[1] + interval[1])) + (Vector3.down * p.y * (blockSize[0] + interval[0]));
-    }
-
-    private IEnumerator Test()
-    {
-        yield return new WaitForSeconds(1f);
-        PangManager.Instance.State = State.Checking;
-        for (int i = 0; i < blockVerticalSize; i++)
-        {
-            for (int j = 0; j < blockHorizontalSize; j++)
-            {
-                PangManager.Instance.CheckPang(new Pos(i, j));
-            }
-        }
-
-        yield return new WaitForSeconds(1f);
-        StartCoroutine(PangManager.Instance.CoRefill(0.4f));
     }
 }
