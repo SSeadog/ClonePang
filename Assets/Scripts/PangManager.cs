@@ -22,7 +22,7 @@ public class PangManager : MonoBehaviour
 
     private BoardController board;
 
-    private bool[][] isCheck;
+    private bool[][] isCheck; // 멤버 변수로 갖기 보다는 매번 팡 함수 호출할 때 생성해서 쓰는 게 맞을 듯. 팡 검사마다 초기화해야함
     private Queue<Pos> queue = new Queue<Pos>();
 
     private Pos firstSelect;
@@ -207,8 +207,42 @@ public class PangManager : MonoBehaviour
             firstSelect = null;
             secondSelect = null;
             State = State.Playing;
-        }
 
+            if (CheckSwapPang() == true)
+            {
+                Debug.Log("스왑해서 팡할 블록 있음");
+            }
+            else
+            {
+                Debug.Log("!! 비상 스왑해도 팡 안됨 !!");
+            }
+        }
+    }
+
+    public bool CheckSwapPang()
+    {
+        for (int i = 0; i < board.BlockVerticalSize; i++)
+        {
+            for (int j = 0; j < board.BlockHorizontalSize; j++)
+            {
+                BlockKind curBlock = board.GetBlock(new Pos(i, j));
+                
+                // 위로 옮긴다면
+                 if (i - 1 >= 0 && j - 1 >= 0 && j + 1 < board.BlockHorizontalSize && board.GetBlock(new Pos(i - 1, j - 1)) == curBlock && board.GetBlock(new Pos(i - 1, j + 1)) == curBlock)
+                    return true;
+                // 아래로 옮긴다면
+                if (i + 1 < board.BlockVerticalSize && j - 1 >= 0 && j + 1 < board.BlockHorizontalSize && board.GetBlock(new Pos(i + 1, j - 1)) == curBlock && board.GetBlock(new Pos(i + 1, j + 1)) == curBlock)
+                    return true;
+                // 왼쪽으로 옮긴다면
+                if (j - 1 >= 0 && i - 1 >= 0 && i + 1 < board.BlockVerticalSize && board.GetBlock(new Pos(i - 1, j - 1)) == curBlock && board.GetBlock(new Pos(i + 1, j - 1)) == curBlock)
+                    return true;
+                // 오른쪽으로 옮긴다면
+                if (j + 1 < board.BlockHorizontalSize && i - 1 >= 0 && i + 1 < board.BlockVerticalSize && board.GetBlock(new Pos(i - 1, j + 1)) == curBlock && board.GetBlock(new Pos(i + 1, j + 1)) == curBlock)
+                    return true;
+            }
+        }
+        
+        return false;
     }
 
     private void CheckPangEntireBoard()
@@ -680,11 +714,11 @@ public class PangManager : MonoBehaviour
             return;
         }
 
-        Debug.Log(matchData.Count + " 개 부수기!");
+        //Debug.Log(matchData.Count + " 개 부수기!");
 
         foreach (Pos p in matchData)
         {
-            Debug.Log(p.y + "," + p.x);
+            //Debug.Log(p.y + "," + p.x);
             board.BreakBlock(p);
         }
     }

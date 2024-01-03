@@ -33,10 +33,6 @@ public class BoardController : MonoBehaviour
     {
         InitBoard();
         GenerateBlocks();
-
-        // 초기 세팅되면 매치되는 게 있는 게 확인해야함
-        // 아니면 세팅할 때 아예 없게 세팅을 해야함
-        StartCoroutine(PangManager.Instance.Test());
     }
 
     public BlockKind GetBlock(Pos pos)
@@ -134,6 +130,15 @@ public class BoardController : MonoBehaviour
                     SpawnBlock(spawnPos, blockKind);
                 }
             }
+        }
+
+        if (PangManager.Instance.CheckSwapPang() == true)
+        {
+            Debug.Log("스왑해서 팡할 블록 있음");
+        }
+        else
+        {
+            Debug.Log("!! 비상 스왑해도 팡 안됨 !!");
         }
 
         //SpawnBlock(new Pos(0, 0), BlockKind.DebugBlock);
