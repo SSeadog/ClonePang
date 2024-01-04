@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Util;
 
@@ -55,6 +53,14 @@ public class BoardController : MonoBehaviour
 
         instanceBoard[a.y][a.x].GetComponent<Block>().Init(a);
         instanceBoard[b.y][b.x].GetComponent<Block>().Init(b);
+    }
+
+    // board데이터만 스왑하는 함수
+    public void SwapData(Pos a, Pos b)
+    {
+        BlockKind tempBlockKind = board[a.y][a.x];
+        board[a.y][a.x] = board[b.y][b.x];
+        board[b.y][b.x] = tempBlockKind;
     }
 
     public void BreakBlock(Pos pos)

@@ -219,26 +219,59 @@ public class PangManager : MonoBehaviour
         }
     }
 
+    // Three매치 로직 그대로 사용하는 게 좋을 듯. 확인할 케이스가 너무 많음
     public bool CheckSwapPang()
     {
         for (int i = 0; i < board.BlockVerticalSize; i++)
         {
             for (int j = 0; j < board.BlockHorizontalSize; j++)
             {
-                BlockKind curBlock = board.GetBlock(new Pos(i, j));
-                
+                Pos curPos = new Pos(i, j);
+
                 // 위로 옮긴다면
-                 if (i - 1 >= 0 && j - 1 >= 0 && j + 1 < board.BlockHorizontalSize && board.GetBlock(new Pos(i - 1, j - 1)) == curBlock && board.GetBlock(new Pos(i - 1, j + 1)) == curBlock)
-                    return true;
+                if (i - 1 >= 0)
+                {
+                    Pos upperPos = new Pos(i - 1, j);
+                    board.SwapData(curPos, upperPos);
+                    bool result = IsPang(upperPos);
+                    board.SwapData(curPos, upperPos);
+
+                    if (result == true)
+                        return true;
+                }
                 // 아래로 옮긴다면
-                if (i + 1 < board.BlockVerticalSize && j - 1 >= 0 && j + 1 < board.BlockHorizontalSize && board.GetBlock(new Pos(i + 1, j - 1)) == curBlock && board.GetBlock(new Pos(i + 1, j + 1)) == curBlock)
-                    return true;
+                if (i + 1 < board.BlockVerticalSize)
+                {
+                    Pos lowerPos = new Pos(i + 1, j);
+                    board.SwapData(curPos, lowerPos);
+                    bool result = IsPang(lowerPos);
+                    board.SwapData(curPos, lowerPos);
+
+                    if (result == true)
+                        return true;
+                }
                 // 왼쪽으로 옮긴다면
-                if (j - 1 >= 0 && i - 1 >= 0 && i + 1 < board.BlockVerticalSize && board.GetBlock(new Pos(i - 1, j - 1)) == curBlock && board.GetBlock(new Pos(i + 1, j - 1)) == curBlock)
-                    return true;
+                if (j - 1 >= 0)
+                {
+                    Pos leftPos = new Pos(i, j - 1);
+                    board.SwapData(curPos, leftPos);
+                    bool result = IsPang(leftPos);
+                    board.SwapData(curPos, leftPos);
+
+                    if (result == true)
+                        return true;
+                }
                 // 오른쪽으로 옮긴다면
-                if (j + 1 < board.BlockHorizontalSize && i - 1 >= 0 && i + 1 < board.BlockVerticalSize && board.GetBlock(new Pos(i - 1, j + 1)) == curBlock && board.GetBlock(new Pos(i + 1, j + 1)) == curBlock)
-                    return true;
+                if (j + 1 < board.BlockHorizontalSize)
+                {
+                    Pos rightPos = new Pos(i, j + 1);
+                    board.SwapData(curPos, rightPos);
+                    bool result = IsPang(rightPos);
+                    board.SwapData(curPos, rightPos);
+
+                    if (result == true)
+                        return true;
+                }
             }
         }
         
