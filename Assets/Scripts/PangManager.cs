@@ -80,8 +80,8 @@ public class PangManager : MonoBehaviour
     // bfs로 구현
     public void CheckPang(Pos pos)
     {
-        CheckVerticalPang(pos);
-        CheckHorizontalPang(pos);
+        VerticalPang(pos);
+        HorizontalPang(pos);
     }
 
     public void SelectObject(Pos pos)
@@ -206,15 +206,16 @@ public class PangManager : MonoBehaviour
         {
             firstSelect = null;
             secondSelect = null;
-            State = State.Playing;
 
             if (CheckSwapPang() == true)
             {
                 Debug.Log("스왑해서 팡할 블록 있음");
+                State = State.Playing;
             }
             else
             {
                 Debug.Log("!! 비상 스왑해도 팡 안됨 !!");
+                StartCoroutine(CoResetBoard());
             }
         }
     }
@@ -276,6 +277,13 @@ public class PangManager : MonoBehaviour
         }
         
         return false;
+    }
+
+    private IEnumerator CoResetBoard()
+    {
+        board.ResetBoard();
+        yield return new WaitForSeconds(0.5f);
+        State = State.Playing;
     }
 
     private void CheckPangEntireBoard()
@@ -522,7 +530,7 @@ public class PangManager : MonoBehaviour
             return false;
     }
 
-    private void CheckVerticalPang(Pos pos)
+    private void VerticalPang(Pos pos)
     {
         List<Pos> matchData = new List<Pos>();
 
@@ -628,7 +636,7 @@ public class PangManager : MonoBehaviour
         queue.Clear();
     }
 
-    private void CheckHorizontalPang(Pos pos)
+    private void HorizontalPang(Pos pos)
     {
         List<Pos> matchData = new List<Pos>();
 
@@ -755,8 +763,4 @@ public class PangManager : MonoBehaviour
             board.BreakBlock(p);
         }
     }
-
-
-
-
 }

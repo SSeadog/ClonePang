@@ -11,8 +11,8 @@ public class BoardController : MonoBehaviour
     [SerializeField] private GameObject yellowBlock;
     [SerializeField] private GameObject debugBlock;
 
-    private int blockHorizontalSize = 7;
-    private int blockVerticalSize = 6;
+    private int blockHorizontalSize = 4;
+    private int blockVerticalSize = 4;
 
     private Vector2 boardVerticalPos = new Vector2(-300f, 300f);
     private Vector2 boardHorizontalPos = new Vector2(-360f, 360f);
@@ -108,6 +108,11 @@ public class BoardController : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void ResetBoard()
+    {
+        GenerateBlocks();
     }
 
     private void InitBoard()
