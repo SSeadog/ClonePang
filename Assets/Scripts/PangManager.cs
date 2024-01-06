@@ -22,7 +22,7 @@ public class PangManager : MonoBehaviour
 
     private BoardController board;
 
-    private bool[][] isCheck; // 멤버 변수로 갖기 보다는 매번 팡 함수 호출할 때 생성해서 쓰는 게 맞을 듯. 팡 검사마다 초기화해야함
+    private bool[][] isCheck;
     private Queue<Pos> queue = new Queue<Pos>();
 
     private Pos firstSelect;
@@ -65,19 +65,19 @@ public class PangManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         State = State.Checking;
-        for (int i = 0; i < board.BlockVerticalSize; i++)
-        {
-            for (int j = 0; j < board.BlockHorizontalSize; j++)
-            {
-                CheckPang(new Pos(i, j));
-            }
-        }
+        //for (int i = 0; i < board.BlockVerticalSize; i++)
+        //{
+        //    for (int j = 0; j < board.BlockHorizontalSize; j++)
+        //    {
+        //        CheckPang(new Pos(i, j));
+        //    }
+        //}
+        CheckPang(new Pos(2, 2));
 
         yield return new WaitForSeconds(1f);
         StartCoroutine(CoRefill(0.4f));
     }
 
-    // bfs로 구현
     public void CheckPang(Pos pos)
     {
         VerticalPang(pos);
@@ -532,6 +532,7 @@ public class PangManager : MonoBehaviour
 
     private void VerticalPang(Pos pos)
     {
+        ClearCheckFlag();
         List<Pos> matchData = new List<Pos>();
 
         queue.Enqueue(pos);
@@ -638,6 +639,7 @@ public class PangManager : MonoBehaviour
 
     private void HorizontalPang(Pos pos)
     {
+        ClearCheckFlag();
         List<Pos> matchData = new List<Pos>();
 
         queue.Enqueue(pos);

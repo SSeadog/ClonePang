@@ -11,11 +11,9 @@ public class BoardController : MonoBehaviour
     [SerializeField] private GameObject yellowBlock;
     [SerializeField] private GameObject debugBlock;
 
-    private int blockHorizontalSize = 4;
-    private int blockVerticalSize = 4;
+    private int blockHorizontalSize = 5;
+    private int blockVerticalSize = 5;
 
-    private Vector2 boardVerticalPos = new Vector2(-300f, 300f);
-    private Vector2 boardHorizontalPos = new Vector2(-360f, 360f);
     private Vector2 blockSize = new Vector2(100f, 100f);
     private Vector2 interval = new Vector2(20f, 20f);
 
@@ -31,6 +29,8 @@ public class BoardController : MonoBehaviour
     {
         InitBoard();
         GenerateBlocks();
+
+        //StartCoroutine(PangManager.Instance.Test());
     }
 
     public BlockKind GetBlock(Pos pos)
@@ -152,11 +152,11 @@ public class BoardController : MonoBehaviour
             Debug.Log("!! ºñ»ó ½º¿ÒÇØµµ ÆÎ ¾ÈµÊ !!");
         }
 
-        //SpawnBlock(new Pos(0, 0), BlockKind.DebugBlock);
         //SpawnBlock(new Pos(1, 0), BlockKind.DebugBlock);
-        //SpawnBlock(new Pos(2, 0), BlockKind.DebugBlock);
         //SpawnBlock(new Pos(1, 1), BlockKind.DebugBlock);
         //SpawnBlock(new Pos(1, 2), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(0, 2), BlockKind.DebugBlock);
+        //SpawnBlock(new Pos(2, 2), BlockKind.DebugBlock);
     }
 
     private void SpawnBlock(Pos pos, BlockKind kind)
