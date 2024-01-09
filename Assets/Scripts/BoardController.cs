@@ -115,6 +115,13 @@ public class BoardController : MonoBehaviour
         GenerateBlocks();
     }
 
+    public void AnimateMoveBlock(Pos from, Pos to)
+    {
+        // from부터 to로 보간시키기
+        Vector3 moveVec = instanceBoard[to.y][to.x].transform.position - instanceBoard[from.y][from.x].transform.position;
+        instanceBoard[from.y][from.x].transform.Translate(moveVec.normalized * Time.deltaTime * 100f);
+    }
+
     private void InitBoard()
     {
         board = new BlockKind[blockVerticalSize][];

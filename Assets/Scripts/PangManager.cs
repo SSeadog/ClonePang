@@ -72,16 +72,18 @@ public class PangManager : MonoBehaviour
         //        CheckPang(new Pos(i, j));
         //    }
         //}
-        CheckPang(new Pos(2, 2));
+        Pang(new Pos(2, 2));
 
         yield return new WaitForSeconds(1f);
         StartCoroutine(CoRefill(0.4f));
     }
 
-    public void CheckPang(Pos pos)
+    public bool Pang(Pos pos)
     {
-        VerticalPang(pos);
-        HorizontalPang(pos);
+        bool verticalResult = VerticalPang(pos);
+        bool horizontalResult = HorizontalPang(pos);
+
+        return verticalResult || horizontalResult;
     }
 
     public void SelectObject(Pos pos)
@@ -171,11 +173,11 @@ public class PangManager : MonoBehaviour
         firstSelectBorder.Clear();
         secondSelectBorder.Clear();
 
-        CheckPang(firstSelect);
-        CheckPang(secondSelect);
+        bool firstResult = Pang(firstSelect);
+        bool secondResult = Pang(secondSelect);
 
         // 바꿨다가 매치 안되면 다시 돌려줘야함
-        if (IsEmptyExist() == false)
+        if (firstResult == false && secondResult == false)
         {
             board.SwapBlock(firstSelect, secondSelect);
             firstSelect = null;
@@ -196,9 +198,9 @@ public class PangManager : MonoBehaviour
         board.Refill();
 
         yield return new WaitForSeconds(1f);
-        CheckPangEntireBoard();
+        bool result = PangEntireBoard();
 
-        if (IsEmptyExist() == true)
+        if (result == true)
         {
             StartCoroutine(CoRefill(0.4f));
         }
@@ -286,15 +288,21 @@ public class PangManager : MonoBehaviour
         State = State.Playing;
     }
 
-    private void CheckPangEntireBoard()
+    private bool PangEntireBoard()
     {
+        bool result = false;
+
         for (int i = 0; i < board.BlockVerticalSize; i++)
         {
             for (int j = 0; j < board.BlockHorizontalSize; j++)
             {
-                PangManager.Instance.CheckPang(new Pos(i, j));
+                bool tempResult = Pang(new Pos(i, j));
+                if (tempResult == true)
+                    result = true;
             }
         }
+
+        return result;
     }
 
     private bool IsEmptyExist()
@@ -530,7 +538,7 @@ public class PangManager : MonoBehaviour
             return false;
     }
 
-    private void VerticalPang(Pos pos)
+    private bool VerticalPang(Pos pos)
     {
         ClearCheckFlag();
         List<Pos> matchData = new List<Pos>();
@@ -632,12 +640,21 @@ public class PangManager : MonoBehaviour
             }
         }
 
-        Break(matchData);
+        bool result = false;
+
+        if (matchData.Count >= 3)
+        {
+            Break(matchData);
+            result = true;
+        }
+
         matchData.Remove(pos);
         queue.Clear();
+
+        return result;
     }
 
-    private void HorizontalPang(Pos pos)
+    private bool HorizontalPang(Pos pos)
     {
         ClearCheckFlag();
         List<Pos> matchData = new List<Pos>();
@@ -740,29 +757,46 @@ public class PangManager : MonoBehaviour
             }
         }
 
-        Break(matchData);
+        bool result = false;
+
+        if (matchData.Count >= 3)
+        {
+            Break(matchData);
+            result = true;
+        }
+
         matchData.Remove(pos);
         queue.Clear();
+
+        return result;
     }
 
     //매치된 타일이 3개 이상이면 삭제
     private void Break(List<Pos> matchData)
     {
-        if (matchData.Count < 3)
-        {
-            // check 여부 초기화
-            foreach (Pos p in matchData)
-                isCheck[p.y][p.x] = false;
-
-            return;
-        }
-
         //Debug.Log(matchData.Count + " 개 부수기!");
 
         foreach (Pos p in matchData)
         {
             //Debug.Log(p.y + "," + p.x);
-            board.BreakBlock(p);
+
+            //board.BreakBlock(p);
+            StartCoroutine(CoBreak(matchData[0], p));
         }
+    }
+
+    // 애니메이션 후 삭제
+    private IEnumerator CoBreak(Pos basePos, Pos breakPos)
+    {
+        float animTime = 0.5f;
+        while (animTime > 0f)
+        {
+            board.AnimateMoveBlock(breakPos, basePos);
+
+            animTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        board.BreakBlock(breakPos);
     }
 }
