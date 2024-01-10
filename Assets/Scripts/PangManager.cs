@@ -184,11 +184,6 @@ public class PangManager : MonoBehaviour
             secondSelect = null;
             State = State.Playing;
         }
-        else
-        {
-            StartCoroutine(CoRefill(0.4f));
-        }
-
     }
 
     public IEnumerator CoRefill(float waitTime = 1f)
@@ -303,19 +298,6 @@ public class PangManager : MonoBehaviour
         }
 
         return result;
-    }
-
-    private bool IsEmptyExist()
-    {
-        for (int i = 0; i < board.BlockVerticalSize; i++)
-        {
-            for (int j = 0; j < board.BlockHorizontalSize; j++)
-            {
-                if (board.GetBlock(new Pos(i,j)) == BlockKind.None)
-                    return true;
-            }
-        }
-        return false;
     }
 
     private bool CheckVerticalCanPang(Pos pos)
@@ -559,6 +541,9 @@ public class PangManager : MonoBehaviour
             if (matchData.Count == 5)
                 break;
 
+            if (board.GetBlock(currentPos) == BlockKind.None)
+                continue;
+
             // 1. 방문 여부 확인
             if (isCheck[currentPos.y][currentPos.x] == true)
                 continue;
@@ -676,6 +661,9 @@ public class PangManager : MonoBehaviour
             if (matchData.Count == 5)
                 break;
 
+            if (board.GetBlock(currentPos) == BlockKind.None)
+                continue;
+
             // 1. 방문 여부 확인
             if (isCheck[currentPos.y][currentPos.x] == true)
                 continue;
@@ -774,29 +762,9 @@ public class PangManager : MonoBehaviour
     //매치된 타일이 3개 이상이면 삭제
     private void Break(List<Pos> matchData)
     {
-        //Debug.Log(matchData.Count + " 개 부수기!");
+        Pos basePos = matchData[0];
 
         foreach (Pos p in matchData)
-        {
-            //Debug.Log(p.y + "," + p.x);
-
-            //board.BreakBlock(p);
-            StartCoroutine(CoBreak(matchData[0], p));
-        }
-    }
-
-    // 애니메이션 후 삭제
-    private IEnumerator CoBreak(Pos basePos, Pos breakPos)
-    {
-        float animTime = 0.5f;
-        while (animTime > 0f)
-        {
-            board.AnimateMoveBlock(breakPos, basePos);
-
-            animTime -= Time.deltaTime;
-            yield return null;
-        }
-
-        board.BreakBlock(breakPos);
+            StartCoroutine(board.CoBreak(basePos, p));
     }
 }

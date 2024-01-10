@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using Util;
 
@@ -69,6 +70,27 @@ public class BoardController : MonoBehaviour
         board[pos.y][pos.x] = BlockKind.None;
     }
 
+    // 애니메이션 후 삭제
+    public IEnumerator CoBreak(Pos basePos, Pos breakPos)
+    {
+        board[breakPos.y][breakPos.x] = BlockKind.None;
+
+        float animTime = 0.5f;
+        while (animTime > 0f)
+        {
+            if (GetInstanceBlock(breakPos) == null || GetInstanceBlock(basePos) == null)
+                break;
+
+            Vector3 moveVec = instanceBoard[basePos.y][basePos.x].transform.position - instanceBoard[breakPos.y][breakPos.x].transform.position;
+            instanceBoard[breakPos.y][breakPos.x].transform.Translate(moveVec.normalized * Time.deltaTime * 500f);
+
+            animTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        BreakBlock(breakPos);
+    }
+
     public void Refill()
     {
         // 맨 아래 + 1부터 모든 칸을 탐색하면서 자기 아래를 기준으로 몇칸이 비는지 보고 내려주기
@@ -115,13 +137,6 @@ public class BoardController : MonoBehaviour
         GenerateBlocks();
     }
 
-    public void AnimateMoveBlock(Pos from, Pos to)
-    {
-        // from부터 to로 보간시키기
-        Vector3 moveVec = instanceBoard[to.y][to.x].transform.position - instanceBoard[from.y][from.x].transform.position;
-        instanceBoard[from.y][from.x].transform.Translate(moveVec.normalized * Time.deltaTime * 100f);
-    }
-
     private void InitBoard()
     {
         board = new BlockKind[blockVerticalSize][];
@@ -131,6 +146,11 @@ public class BoardController : MonoBehaviour
             board[i] = new BlockKind[blockHorizontalSize];
             instanceBoard[i] = new GameObject[blockHorizontalSize];
         }
+    }
+
+    private GameObject GetInstanceBlock(Pos p)
+    {
+        return instanceBoard[p.y][p.x];
     }
 
     private void GenerateBlocks()
