@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using Util;
 
 public class BoardController : MonoBehaviour
@@ -66,8 +67,32 @@ public class BoardController : MonoBehaviour
 
     private void BreakBlock(Pos pos)
     {
-        DestroyImmediate(instanceBoard[pos.y][pos.x]);
+        if (instanceBoard[pos.y][pos.x] != null)
+            DestroyImmediate(instanceBoard[pos.y][pos.x]);
+
         board[pos.y][pos.x] = BlockKind.None;
+    }
+
+    // 애니메이션 후 스왑
+    public IEnumerator CoSwapBlock(Pos aPos, Pos bPos, UnityAction onSwapDoneAction)
+    {
+        Vector3 bBasePos = instanceBoard[bPos.y][bPos.x].transform.position;
+        float animTime = 0.5f;
+        while (animTime > 0f)
+        {
+            Vector3 aMoveVec = bBasePos - instanceBoard[aPos.y][aPos.x].transform.position;
+            Vector3 bMoveVec = aMoveVec * -1;
+
+            instanceBoard[aPos.y][aPos.x].transform.Translate(aMoveVec * Time.deltaTime * 10f);
+            instanceBoard[bPos.y][bPos.x].transform.Translate(bMoveVec * Time.deltaTime * 10f);
+
+            animTime -= Time.deltaTime;
+            yield return null;
+        }
+
+
+        SwapBlock(aPos, bPos);
+        onSwapDoneAction.Invoke();
     }
 
     // 애니메이션 후 삭제
@@ -83,7 +108,7 @@ public class BoardController : MonoBehaviour
                 break;
 
             Vector3 moveVec = instanceBoard[basePos.y][basePos.x].transform.position - instanceBoard[breakPos.y][breakPos.x].transform.position;
-            instanceBoard[breakPos.y][breakPos.x].transform.Translate(moveVec.normalized * Time.deltaTime * 500f);
+            instanceBoard[breakPos.y][breakPos.x].transform.Translate(moveVec * Time.deltaTime * 10f);
 
             animTime -= Time.deltaTime;
             yield return null;
@@ -93,6 +118,11 @@ public class BoardController : MonoBehaviour
         PangManager.Instance.BreakAnimationCoroutineCount--;
     }
 
+    // Todo 비워진 칸 새로 생성시킬 때 아래부터 생성시키면서
+    // 1. 몇칸 내려가야하는지
+    // 2. 이미 생성된 새 블록이 몇개인지
+    // 위 2가지를 보고 위치 결정하기
+    // fallCount를 함수 내에서 캐싱해둔 뒤 아래에서 또 쓰는 게 좋을 듯
     public void Refill()
     {
         // 맨 아래 + 1부터 모든 칸을 탐색하면서 자기 아래를 기준으로 몇칸이 비는지 보고 내려주기
@@ -115,7 +145,7 @@ public class BoardController : MonoBehaviour
                 }
 
                 if (fallCount > 0)
-                    MoveBlock(basePos, new Pos(basePos.y + fallCount, basePos.x));
+                    MoveBlock(basePos, new Pos(basePos.y + fallCount, basePos.x)); // 몇칸 내릴지 결정 필요
             }
         }
 
@@ -128,7 +158,8 @@ public class BoardController : MonoBehaviour
                 {
                     Pos spawnPos = new Pos(i, j);
                     int rand = Random.Range(1, 6);
-                    SpawnBlock(spawnPos, (BlockKind)rand);
+                    SpawnBlock(spawnPos, (BlockKind)rand); // 몇칸 내려가는지 확인 필요
+                    
                 }
             }
         }
@@ -163,11 +194,13 @@ public class BoardController : MonoBehaviour
             {
                 Pos spawnPos = new Pos(i, j);
                 BlockKind blockKind = (BlockKind)Random.Range(1, 6);
-                SpawnBlock(spawnPos, blockKind);
-                while(PangManager.Instance.IsPang(spawnPos) == true)
+                //SpawnBlock(spawnPos, blockKind);
+                Coroutine spawnBlockCoroutine = StartCoroutine(CoSpawnBlock(spawnPos, blockKind));
+                while (PangManager.Instance.IsPang(spawnPos) == true)
                 {
                     blockKind = (BlockKind)Random.Range(1, 6);
-                    SpawnBlock(spawnPos, blockKind);
+                    StopCoroutine(spawnBlockCoroutine);
+                    spawnBlockCoroutine = StartCoroutine(CoSpawnBlock(spawnPos, blockKind));
                 }
             }
         }
@@ -180,12 +213,37 @@ public class BoardController : MonoBehaviour
         {
             Debug.Log("!! 비상 스왑해도 팡 안됨 !!");
         }
+    }
 
-        //SpawnBlock(new Pos(1, 0), BlockKind.DebugBlock);
-        //SpawnBlock(new Pos(1, 1), BlockKind.DebugBlock);
-        //SpawnBlock(new Pos(1, 2), BlockKind.DebugBlock);
-        //SpawnBlock(new Pos(0, 2), BlockKind.DebugBlock);
-        //SpawnBlock(new Pos(2, 2), BlockKind.DebugBlock);
+    private IEnumerator CoSpawnBlock(Pos pos, BlockKind kind)
+    {
+        if (GetBlock(pos) != BlockKind.None)
+            BreakBlock(pos);
+
+        board[pos.y][pos.x] = kind;
+
+        // 떨어질 칸 수 받기? 일단 무조건 6칸 위로 생성
+        // 일정한 속도로 떨어져야 함
+        float fallSpeed = 400f;
+        float fallDist = (-6f * (blockSize[0] + interval[0]));
+        float finalYPos = GetSpawnCoord(pos).y;
+        Vector3 spawnCoord = GetSpawnCoord(pos);
+        GameObject blockInstance = InstantiateBlock(kind, spawnCoord, pos);
+
+        Pos initPos = new Pos(pos.y - 6, pos.x);
+        Vector3 initCoord = GetSpawnCoord(initPos);
+        blockInstance.transform.localPosition = initCoord;
+
+        float fallTime = Mathf.Abs(fallDist / fallSpeed);
+        while (fallTime > 0f)
+        {
+            blockInstance.transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
+
+            fallTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        instanceBoard[pos.y][pos.x] = blockInstance;
     }
 
     private void SpawnBlock(Pos pos, BlockKind kind)

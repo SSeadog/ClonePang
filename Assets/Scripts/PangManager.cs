@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using Util;
 
 public enum State
@@ -125,7 +126,7 @@ public class PangManager : MonoBehaviour
                 return;
             }
 
-            StartCoroutine(CoSelectDone());
+            SelectDone();
         }
     }
 
@@ -165,32 +166,33 @@ public class PangManager : MonoBehaviour
         return false;
     }
 
-    private IEnumerator CoSelectDone()
+    private void SelectDone()
     {
-        board.SwapBlock(firstSelect, secondSelect);
-        
-        yield return new WaitForSeconds(0.4f);
-
-        State = State.Checking;
-
-        firstSelectBorder.Clear();
-        secondSelectBorder.Clear();
-
-        bool firstResult = Pang(firstSelect);
-        bool secondResult = Pang(secondSelect);
-
-        // 바꿨다가 매치 안되면 다시 돌려줘야함
-        if (firstResult == false && secondResult == false)
+        UnityAction action = () =>
         {
-            board.SwapBlock(firstSelect, secondSelect);
-            firstSelect = null;
-            secondSelect = null;
-            State = State.Playing;
-        }
-        else
-        {
-            StartCoroutine(CoRefill());
-        }
+            State = State.Checking;
+
+            firstSelectBorder.Clear();
+            secondSelectBorder.Clear();
+
+            bool firstResult = Pang(firstSelect);
+            bool secondResult = Pang(secondSelect);
+
+            // 바꿨다가 매치 안되면 다시 돌려줘야함
+            if (firstResult == false && secondResult == false)
+            {
+                board.SwapBlock(firstSelect, secondSelect);
+                firstSelect = null;
+                secondSelect = null;
+                State = State.Playing;
+            }
+            else
+            {
+                StartCoroutine(CoRefill());
+            }
+        };
+
+        StartCoroutine(board.CoSwapBlock(firstSelect, secondSelect, action));
     }
 
     public IEnumerator CoRefill()
