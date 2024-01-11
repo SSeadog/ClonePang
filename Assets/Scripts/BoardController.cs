@@ -64,7 +64,7 @@ public class BoardController : MonoBehaviour
         board[b.y][b.x] = tempBlockKind;
     }
 
-    public void BreakBlock(Pos pos)
+    private void BreakBlock(Pos pos)
     {
         DestroyImmediate(instanceBoard[pos.y][pos.x]);
         board[pos.y][pos.x] = BlockKind.None;
@@ -73,6 +73,7 @@ public class BoardController : MonoBehaviour
     // 애니메이션 후 삭제
     public IEnumerator CoBreak(Pos basePos, Pos breakPos)
     {
+        PangManager.Instance.BreakAnimationCoroutineCount++;
         board[breakPos.y][breakPos.x] = BlockKind.None;
 
         float animTime = 0.5f;
@@ -89,6 +90,7 @@ public class BoardController : MonoBehaviour
         }
 
         BreakBlock(breakPos);
+        PangManager.Instance.BreakAnimationCoroutineCount--;
     }
 
     public void Refill()

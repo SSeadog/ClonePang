@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Util;
-using static UnityEditor.PlayerSettings;
 
 public enum State
 {
@@ -27,6 +26,10 @@ public class PangManager : MonoBehaviour
 
     private Pos firstSelect;
     private Pos secondSelect;
+
+    private int breakAnimationCoroutineCount;
+
+    public int BreakAnimationCoroutineCount { get { return breakAnimationCoroutineCount; } set { breakAnimationCoroutineCount = value; } }
 
     private State state;
 
@@ -75,7 +78,7 @@ public class PangManager : MonoBehaviour
         Pang(new Pos(2, 2));
 
         yield return new WaitForSeconds(1f);
-        StartCoroutine(CoRefill(0.4f));
+        StartCoroutine(CoRefill());
     }
 
     public bool Pang(Pos pos)
@@ -184,20 +187,29 @@ public class PangManager : MonoBehaviour
             secondSelect = null;
             State = State.Playing;
         }
+        else
+        {
+            StartCoroutine(CoRefill());
+        }
     }
 
-    public IEnumerator CoRefill(float waitTime = 1f)
+    public IEnumerator CoRefill()
     {
         Debug.Log("CoRefill È£Ãâ");
-        yield return new WaitForSeconds(waitTime);
+        while(breakAnimationCoroutineCount > 0)
+        {
+            Debug.Log(breakAnimationCoroutineCount);
+            yield return null;
+        }
+
         board.Refill();
 
-        yield return new WaitForSeconds(1f);
-        bool result = PangEntireBoard();
+        yield return new WaitForSeconds(0.2f);
 
+        bool result = PangEntireBoard();
         if (result == true)
         {
-            StartCoroutine(CoRefill(0.4f));
+            StartCoroutine(CoRefill());
         }
         else
         {
